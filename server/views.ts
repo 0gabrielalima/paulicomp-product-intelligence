@@ -61,6 +61,21 @@ function enrich(r: any, listings: Listing[]) {
   const compat = compatConfidence({ oficial_sku: r.compat_official, fonte_complementar: r.compat_count - r.compat_official });
   const com = commercialConfidence(stats);
   const g = stats.groups;
+  // Preco medio dos concorrentes no Brasil: usa a concorrencia nacional direta; sem ela, a indireta nacional.
+  // Nunca entram anuncios proprios, historicos, excluidos ou internacionais (estes ficam na mediana internacional).
+  const natPrices = (grp: string) => listings.flatMap((l) => {
+    const u = stats.listings[l.id];
+    return u && u.included && u.price != null && u.group === grp && l.market !== "internacional" ? [u.price] : [];
+  });
+  const direct = natPrices("nacional_direta");
+  const compPrices = direct.length ? direct : natPrices("indireta");
+  const compBasis = direct.length ? "direta" : compPrices.length ? "indireta" : null;
+  const ORDER: Record<string, number> = { nacional_direta: 0, indireta: 1, internacional_direta: 2, historico: 3, propria: 4 };
+  const ads = listings.filter((l) => !l.excluded && (l as any).url).map((l) => ({
+    url: (l as any).url as string, title: ((l as any).title as string) || null, seller: l.seller || l.store || null,
+    price: stats.listings[l.id]?.price ?? l.price_original ?? null, group: stats.listings[l.id]?.group ?? null, own: !!l.is_own,
+    intl: l.market === "internacional",
+  })).sort((a, b) => (ORDER[a.group ?? ""] ?? 9) - (ORDER[b.group ?? ""] ?? 9));
   return {
     id: r.id, lot_id: r.lot_id, lot_code: r.lot_code, product_id: r.product_id, sku: r.sku, quantity: qty,
     original_description: r.original_description, original_commodity: r.original_commodity, existed_before: r.existed_before,
@@ -81,6 +96,11 @@ function enrich(r: any, listings: Listing[]) {
     compat_count: r.compat_count, compat_official: r.compat_official,
     nat_count: g.nacional_direta.encontrados, int_count: g.internacional_direta.encontrados, ind_count: g.indireta.encontrados,
     nat_min: g.nacional_direta.menor, nat_median: g.nacional_direta.mediana, int_median: g.internacional_direta.mediana,
+    comp_count: compPrices.length, comp_basis: compBasis,
+    comp_avg: compPrices.length ? round2(compPrices.reduce((a, b) => a + b, 0) / compPrices.length) : null,
+    comp_min: compPrices.length ? round2(Math.min(...compPrices)) : null,
+    comp_max: compPrices.length ? round2(Math.max(...compPrices)) : null,
+    ads,
     conf_tech: tech.level, conf_compat: compat.level, conf_com: com.level,
     last_market_at: r.last_market_at,
     validator: r.com_by || r.tech_by || null,

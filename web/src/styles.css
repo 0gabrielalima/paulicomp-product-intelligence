@@ -138,3 +138,10 @@ table.t tbody tr.click { cursor: pointer; }
 .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #12263f; color: #fff; padding: 9px 16px; border-radius: 6px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
 .toast.error { background: var(--red); }
 .hist { height: 70px; display: flex; align-items: flex-end; gap: 3px; } .hist div { flex: 1; background: var(--brand-2); min-height: 2px; border-radius: 2px 2px 0 0; }
+
+/* Links dos anuncios na lista do lote */
+.adlinks { display: flex; flex-wrap: wrap; gap: 3px; max-width: 260px; }
+.adlink { font-size: 11px; padding: 1px 6px; border-radius: 9px; background: var(--blue-bg); color: var(--blue); text-decoration: none; white-space: nowrap; }
+.adlink:hover { text-decoration: underline; }
+.adlink.ind { background: var(--gray-bg); color: var(--gray); }
+.adlink.own { background: var(--green-bg); color: var(--green); }

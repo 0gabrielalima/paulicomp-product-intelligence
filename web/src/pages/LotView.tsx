@@ -5,11 +5,12 @@ import { ResearchModal } from "./Research.tsx";
 
 type Item = any;
 const EXTRA_COLS: [string, string][] = [
+  ["comp_avg", "Preço médio dos concorrentes"], ["comp_range", "Faixa dos concorrentes (menor–maior)"], ["links", "Links dos anúncios"],
   ["fru", "FRU oficial"], ["original_description", "Nomenclatura Lenovo"], ["nat_min", "Menor preço nacional"], ["nat_median", "Mediana nacional"], ["int_median", "Mediana internacional (R$)"],
   ["ads", "Anúncios (nac/int/ind)"], ["compat_count", "Compatibilidades"], ["conf_tech", "Confiança técnica"], ["conf_com", "Confiança comercial"],
   ["total_ai", "Valor total sugerido IA"], ["validator", "Responsável"], ["research_at", "Última pesquisa"],
 ];
-const DEFAULT_STATE = { q: "", category: "", research: "", tech: "", com: "", flags: "", conf: "", existed: "", sort: { key: "", dir: 1 }, cols: [] as string[] };
+const DEFAULT_STATE = { q: "", category: "", research: "", tech: "", com: "", flags: "", conf: "", existed: "", sort: { key: "", dir: 1 }, cols: ["comp_avg", "links"] as string[] };
 
 function usePersisted<T>(key: string, init: T) {
   const [v, setV] = useState<T>(() => { try { return { ...init, ...JSON.parse(sessionStorage.getItem(key) || "{}") }; } catch { return init; } });
@@ -150,6 +151,9 @@ export function LotView({ lotId }: { lotId: number }) {
           <th className="sort num" onClick={() => sortBy("ai_price")}>Preço IA{arrow("ai_price")}</th>
           <th className="sort num" onClick={() => sortBy("approved_price")}>Preço validado{arrow("approved_price")}</th>
           <th className="sort num" onClick={() => sortBy("total_validated")}>Total validado{arrow("total_validated")}</th>
+          {has("comp_avg") && <th className="sort num" onClick={() => sortBy("comp_avg")} title="Média dos concorrentes nacionais: usa a concorrência direta; sem ela, a indireta (marcada 'ind.'). Exclui anúncios próprios, históricos, desconsiderados e internacionais.">Preço médio conc.{arrow("comp_avg")}</th>}
+          {has("comp_range") && <th className="num">Faixa conc.</th>}
+          {has("links") && <th>Anúncios</th>}
           {has("fru") && <th>FRU</th>}
           {has("original_description") && <th>Nomenclatura Lenovo</th>}
           {has("nat_min") && <th className="sort num" onClick={() => sortBy("nat_min")}>Menor nac.{arrow("nat_min")}</th>}
@@ -176,6 +180,9 @@ export function LotView({ lotId }: { lotId: number }) {
             <td className="num">{i.ai_abstained ? <span className="faint small" title="A IA se absteve por falta de referências confiáveis">absteve-se</span> : money(i.ai_price)}</td>
             <td className="num" onClick={(e) => e.stopPropagation()}><PriceCell item={i} onSaved={onItemChanged} /></td>
             <td className="num">{i.total_validated != null ? <b>{money(i.total_validated)}</b> : <span className="pending-v">Pendente</span>}</td>
+            {has("comp_avg") && <td className="num">{i.comp_avg != null ? <span title={`${i.comp_count} anúncio(s) nacionais no cálculo — concorrência ${i.comp_basis}${i.comp_basis === "indireta" ? " (produtos semelhantes, não idênticos)" : ""}`}>{money(i.comp_avg)}<span className="faint small"> ({i.comp_count}{i.comp_basis === "indireta" ? " ind." : ""})</span></span> : <span className="faint">—</span>}</td>}
+            {has("comp_range") && <td className="num small">{i.comp_min != null ? (i.comp_min === i.comp_max ? money(i.comp_min) : `${money(i.comp_min)} – ${money(i.comp_max)}`) : <span className="faint">—</span>}</td>}
+            {has("links") && <td onClick={(e) => e.stopPropagation()}><AdLinks ads={i.ads || []} /></td>}
             {has("fru") && <td className="mono">{i.fru || "—"}</td>}
             {has("original_description") && <td className="small trunc">{i.original_description}</td>}
             {has("nat_min") && <td className="num">{money(i.nat_min)}</td>}
@@ -217,6 +224,18 @@ export function LotView({ lotId }: { lotId: number }) {
 }
 
 const label = (s: string) => ({ nao_pesquisado: "Não pesquisado", na_fila: "Na fila", em_andamento: "Em andamento", parcial: "Parcial", concluida: "Concluída", falha: "Falha", pausada: "Pausada", cancelada: "Cancelada", pendente: "Pendente", rascunho: "Rascunho", aprovada: "Aprovada", revisao_solicitada: "Revisão solicitada", nao_identificado: "Não identificado", alta: "Alta", media: "Média", baixa: "Baixa", insuficiente: "Insuficiente" } as Record<string, string>)[s] || s;
+
+/** Links dos anúncios coletados: um chip por anúncio (preço + loja), abre em nova aba. */
+function AdLinks({ ads }: { ads: any[] }) {
+  if (!ads.length) return <span className="faint">—</span>;
+  const show = ads.slice(0, 3);
+  return <div className="adlinks">
+    {show.map((a, n) => <a key={n} href={a.url} target="_blank" rel="noreferrer noopener" className={`adlink ${a.own ? "own" : a.group === "indireta" ? "ind" : ""}`}
+      title={`${a.title || "Anúncio"}\n${a.seller || ""}${a.own ? " (anúncio próprio Paulicomp)" : a.group === "indireta" ? " (concorrência indireta)" : a.intl ? " (internacional, convertido para R$)" : ""}`}>
+      {a.price != null ? money(a.price) : "ver"}{a.own ? " · próprio" : a.intl ? " · int." : ""} ↗</a>)}
+    {ads.length > show.length && <span className="faint small">+{ads.length - show.length}</span>}
+  </div>;
+}
 
 function summarize(xs: Item[]) {
   let units = 0, unitsOk = 0, totalOk = 0, totalAi = 0;
