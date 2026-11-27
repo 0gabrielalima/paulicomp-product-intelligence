@@ -1,0 +1,15 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Ponte de coleta</title></head>
+<body style="font-family:system-ui;padding:16px">Ponte de coleta da pesquisa assistida (recebe dados das abas Lenovo/Mercado Livre e grava no servidor local).
+<pre id="log"></pre>
+<script>
+const ALLOWED = ["https://support.lenovo.com", "https://www.mercadolivre.com.br", "https://lista.mercadolivre.com.br", "https://produto.mercadolivre.com.br"];
+window.addEventListener("message", async (e) => {
+  if (!ALLOWED.includes(e.origin) || !e.data || e.data.type !== "ppi-bridge") return;
+  const { name, data } = e.data;
+  if (!/^[a-z0-9_-]{1,60}$/i.test(name)) return;
+  const r = await fetch("/api/bridge/" + name, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data), credentials: "same-origin" });
+  const msg = r.ok ? "ok" : "erro " + r.status;
+  document.getElementById("log").textContent += name + ": " + msg + "\n";
+  e.source.postMessage({ type: "ppi-bridge-ack", name, status: msg }, e.origin);
+});
+</script></body></html>

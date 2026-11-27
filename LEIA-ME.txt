@@ -1,0 +1,8 @@
+Piloto Gemini — substitui o motor OpenAI, sem alterar banco ou frontend.
+1. Pare o servidor (Ctrl+C), faça backup do projeto e da pasta data.
+2. Extraia este ZIP na raiz do projeto original/piloto, substituindo os arquivos correspondentes. Requer os arquivos do piloto 0.2 já instalados.
+3. Mantenha GEMINI_API_KEY no .env original e faturamento desativado no AI Studio. Não envie a chave.
+4. Execute npm run typecheck, npm run build, npm start. Abra http://localhost:3100.
+5. Pesquise apenas um SKU (SSS0L24804), confira a central de pesquisas e os links.
+O modelo é gemini-2.5-flash. Não há fallback pago. Limites de busca do Gemini são contabilizados após retorno; não são um limite monetário rígido. A modalidade gratuita pode usar dados para melhoria dos serviços: use somente SKUs e informações públicas de peças com autorização da empresa. Não envie dados confidenciais.
+Sem teste autenticado nesta entrega. Links sem correspondência com fontes retornadas são descartados. A sugestão automática de preço permanece conservadora, podendo ficar em branco para anúncios indexados. Lenovo permanece semiautomática.

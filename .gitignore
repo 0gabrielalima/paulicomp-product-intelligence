@@ -1,0 +1,9 @@
+node_modules
+dist
+data/
+.env
+*.log
+
+# Copias antigas e pacotes zip exportados (nao versionar)
+*.zip
+server/server chat/
