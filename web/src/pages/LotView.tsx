@@ -21,7 +21,7 @@ function usePersisted<T>(key: string, init: T) {
 export function LotView({ lotId }: { lotId: number }) {
   const user = useUser();
   const { data, error, setData, reload } = useApi<any>(`/lots/${lotId}`);
-  const [st, setSt] = usePersisted(`lot:${lotId}:state`, DEFAULT_STATE);
+  const [st, setSt] = usePersisted(`lot:${lotId}:state:v2`, DEFAULT_STATE); // v2: colunas de concorrência ligadas por padrão
   const [sel, setSel] = useState<Set<number>>(new Set());
   const [open, setOpen] = useState<number | null>(null);
   const [active, setActive] = useState<number | null>(null);
@@ -149,11 +149,11 @@ export function LotView({ lotId }: { lotId: number }) {
           <th className="sort" onClick={() => sortBy("category")}>Categoria{arrow("category")}</th>
           <th className="sort num" onClick={() => sortBy("quantity")}>Qtd{arrow("quantity")}</th>
           <th className="sort num" onClick={() => sortBy("ai_price")}>Preço IA{arrow("ai_price")}</th>
-          <th className="sort num" onClick={() => sortBy("approved_price")}>Preço validado{arrow("approved_price")}</th>
-          <th className="sort num" onClick={() => sortBy("total_validated")}>Total validado{arrow("total_validated")}</th>
           {has("comp_avg") && <th className="sort num" onClick={() => sortBy("comp_avg")} title="Média dos concorrentes nacionais: usa a concorrência direta; sem ela, a indireta (marcada 'ind.'). Exclui anúncios próprios, históricos, desconsiderados e internacionais.">Preço médio conc.{arrow("comp_avg")}</th>}
           {has("comp_range") && <th className="num">Faixa conc.</th>}
           {has("links") && <th>Anúncios</th>}
+          <th className="sort num" onClick={() => sortBy("approved_price")}>Preço validado{arrow("approved_price")}</th>
+          <th className="sort num" onClick={() => sortBy("total_validated")}>Total validado{arrow("total_validated")}</th>
           {has("fru") && <th>FRU</th>}
           {has("original_description") && <th>Nomenclatura Lenovo</th>}
           {has("nat_min") && <th className="sort num" onClick={() => sortBy("nat_min")}>Menor nac.{arrow("nat_min")}</th>}
@@ -178,11 +178,11 @@ export function LotView({ lotId }: { lotId: number }) {
             <td className="small">{i.category || "—"}{i.category_source === "commodity" && <span className="faint" title="Categoria inferida do campo Commodity da Lenovo (não validada)"> *</span>}</td>
             <td className="num">{num(i.quantity)}</td>
             <td className="num">{i.ai_abstained ? <span className="faint small" title="A IA se absteve por falta de referências confiáveis">absteve-se</span> : money(i.ai_price)}</td>
-            <td className="num" onClick={(e) => e.stopPropagation()}><PriceCell item={i} onSaved={onItemChanged} /></td>
-            <td className="num">{i.total_validated != null ? <b>{money(i.total_validated)}</b> : <span className="pending-v">Pendente</span>}</td>
             {has("comp_avg") && <td className="num">{i.comp_avg != null ? <span title={`${i.comp_count} anúncio(s) nacionais no cálculo — concorrência ${i.comp_basis}${i.comp_basis === "indireta" ? " (produtos semelhantes, não idênticos)" : ""}`}>{money(i.comp_avg)}<span className="faint small"> ({i.comp_count}{i.comp_basis === "indireta" ? " ind." : ""})</span></span> : <span className="faint">—</span>}</td>}
             {has("comp_range") && <td className="num small">{i.comp_min != null ? (i.comp_min === i.comp_max ? money(i.comp_min) : `${money(i.comp_min)} – ${money(i.comp_max)}`) : <span className="faint">—</span>}</td>}
             {has("links") && <td onClick={(e) => e.stopPropagation()}><AdLinks ads={i.ads || []} /></td>}
+            <td className="num" onClick={(e) => e.stopPropagation()}><PriceCell item={i} onSaved={onItemChanged} /></td>
+            <td className="num">{i.total_validated != null ? <b>{money(i.total_validated)}</b> : <span className="pending-v">Pendente</span>}</td>
             {has("fru") && <td className="mono">{i.fru || "—"}</td>}
             {has("original_description") && <td className="small trunc">{i.original_description}</td>}
             {has("nat_min") && <td className="num">{money(i.nat_min)}</td>}

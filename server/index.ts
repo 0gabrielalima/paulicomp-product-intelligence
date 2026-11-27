@@ -46,8 +46,9 @@ app.use("/api", (_req, res) => res.status(404).json({ error: "Rota não encontra
 
 const dist = path.resolve("dist");
 if (fs.existsSync(dist)) {
-  app.use(express.static(dist));
-  app.get(/^\/(?!api).*/, (_req, res) => res.sendFile(path.join(dist, "index.html")));
+  // index.html nunca fica em cache (sempre aponta para o build atual); assets com hash podem ficar.
+  app.use(express.static(dist, { setHeaders: (res, file) => { if (file.endsWith(".html")) res.setHeader("Cache-Control", "no-cache"); } }));
+  app.get(/^\/(?!api).*/, (_req, res) => { res.setHeader("Cache-Control", "no-cache"); res.sendFile(path.join(dist, "index.html")); });
 }
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
